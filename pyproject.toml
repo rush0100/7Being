@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sevenbeing"
+version = "0.1.0"
+description = "7Being — Brain/Body/Breath/Emotion/Attention/Environment/Being (Brain→BCI ships first)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "7Being" }]
+dependencies = [
+  "numpy",
+  "scikit-learn>=1.4",
+  "joblib>=1.3",
+  "grpcio>=1.60",
+]
+
+[project.optional-dependencies]
+dev = ["pyinstaller>=6.0", "grpcio-tools>=1.60"]
+epocx = ["7being-emotiv-epocx>=0.1.0"]
+h1 = ["7being-h1>=0.1.0"]
+ads1299 = ["7being-ads1299>=0.1.0"]
+devices = [
+  "7being-emotiv-epocx>=0.1.0",
+  "7being-h1>=0.1.0",
+  "7being-ads1299>=0.1.0",
+]
+
+[project.scripts]
+sevenbeing = "sevenbeing:run_gui"
+"7being" = "sevenbeing:run_gui"
+
+[tool.setuptools.packages.find]
+include = ["sevenbeing*"]
+
+[tool.setuptools.package-data]
+sevenbeing = ["brain/bci/gui/static/*"]
+
+# Proto sources ship next to the repo for other-language stubs.
+# Path: protos/sevenbeing/device/v1/device.proto

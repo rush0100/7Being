@@ -1,0 +1,132 @@
+syntax = "proto3";
+
+package sevenbeing.device.v1;
+
+option py_generic_services = false;
+
+// Device daemon ↔ sevenbeing core transport.
+// Each hardware package runs a DeviceService; core attaches as a client.
+
+message Empty {}
+
+message KindResponse {
+  string kind = 1;
+  string package = 2;
+  string version = 3;
+}
+
+message DeviceInfoMsg {
+  string id = 1;
+  string kind = 2;
+  string name = 3;
+  string address = 4;
+  int32 n_channels = 5;
+  repeated string channels = 6;
+  int32 sample_rate_hz = 7;
+  map<string, string> meta = 8;
+}
+
+message ScanRequest {
+  float timeout_s = 1;
+}
+
+message ScanResponse {
+  repeated DeviceInfoMsg devices = 1;
+}
+
+message OpenRequest {
+  DeviceInfoMsg device = 1;
+}
+
+message OpenResponse {
+  DeviceInfoMsg device = 1;
+  bool ok = 2;
+  string error = 3;
+}
+
+message CloseRequest {
+  string device_id = 1; // empty = all
+}
+
+message DeviceStateMsg {
+  DeviceInfoMsg info = 1;
+  bool connected = 2;
+  int32 sample_rate = 3;
+  string detail = 4;
+  optional int32 battery = 5;
+  bool locked = 6;
+}
+
+message GetStateRequest {
+  string device_id = 1;
+}
+
+message ConfigureRequest {
+  string device_id = 1;
+  string json = 2; // front-end object: channels, reference, bias, gain
+}
+
+message ConfigureResponse {
+  bool ok = 1;
+  string detail = 2;
+  string error = 3;
+}
+
+message SubscribeRequest {
+  string device_id = 1; // empty = all open devices
+}
+
+message SampleEvent {
+  string device_id = 1;
+  repeated float values = 2;
+  int64 t_unix_ms = 3;
+}
+
+message MotionEvent {
+  string device_id = 1;
+  repeated float values = 2;
+}
+
+message CqEvent {
+  string device_id = 1;
+  int32 index = 2;
+  float value = 3;
+}
+
+message CounterEvent {
+  string device_id = 1;
+  int32 counter = 2;
+}
+
+message StatusEvent {
+  string device_id = 1;
+  string text = 2;
+  bool warn = 3;
+}
+
+message BrainEvent {
+  string device_id = 1;
+  string json = 2; // opaque JSON brain map payload
+}
+
+message Event {
+  oneof payload {
+    SampleEvent sample = 1;
+    MotionEvent motion = 2;
+    CqEvent cq = 3;
+    CounterEvent counter = 4;
+    StatusEvent status = 5;
+    BrainEvent brain = 6;
+    DeviceStateMsg state = 7;
+  }
+}
+
+service DeviceService {
+  rpc GetKind(Empty) returns (KindResponse);
+  rpc Scan(ScanRequest) returns (ScanResponse);
+  rpc Open(OpenRequest) returns (OpenResponse);
+  rpc Close(CloseRequest) returns (Empty);
+  rpc GetState(GetStateRequest) returns (DeviceStateMsg);
+  rpc Configure(ConfigureRequest) returns (ConfigureResponse);
+  rpc Subscribe(SubscribeRequest) returns (stream Event);
+}
